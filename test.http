@@ -13,3 +13,11 @@ Content-Type: application/json
 {
     "id" : 985
 }
+
+####
+
+POST http://localhost:7071/api/Aggregate/triggers/manual/invoke?api-version=2020-05-01-preview&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=NVwc5TZaYXOUJqucwiywQE8ZXoJGdAQYngGiXWSGPhU
+
+{
+    "userId" : 1
+}

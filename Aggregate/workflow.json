@@ -1,0 +1,201 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "SOAP_HTTP": {
+                "type": "Http",
+                "inputs": {
+                    "method": "POST",
+                    "uri": "http://ins-domain-soap-api.azurewebsites.net/Service1.svc",
+                    "headers": {
+                        "Content-Type": "text/xml",
+                        "SOAPAction": "http://tempuri.org/IService1/GetPolicy",
+                        "Host": "ins-domain-soap-api.azurewebsites.net"
+                    },
+                    "body": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <tem:GetPolicy>\n         <!--Optional:-->\n         <tem:policyId></tem:policyId>\n      </tem:GetPolicy>\n   </soapenv:Body>\n</soapenv:Envelope>"
+                },
+                "runAfter": {}
+            },
+            "Parse_JSON": {
+                "type": "ParseJson",
+                "inputs": {
+                    "content": "@{json(xml(body('SOAP_HTTP')))}",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "s:Envelope": {
+                                "type": "object",
+                                "properties": {
+                                    "@@xmlns:s": {
+                                        "type": "string"
+                                    },
+                                    "s:Body": {
+                                        "type": "object",
+                                        "properties": {
+                                            "GetPolicyResponse": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "@@xmlns": {
+                                                        "type": "string"
+                                                    },
+                                                    "GetPolicyResult": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "@@xmlns:a": {
+                                                                "type": "string"
+                                                            },
+                                                            "@@xmlns:i": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:Amount": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:CoverStarts": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:PolicyEnd": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:PolicyHolderLastName": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:PolicyHolderName": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:PolicyId": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:PolicyNo": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:PrimaryPolicyHolderId": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:ProductDesc": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:ProductID": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "@@i:nil": {
+                                                                        "type": "string"
+                                                                    }
+                                                                }
+                                                            },
+                                                            "a:ProductName": {
+                                                                "type": "string"
+                                                            },
+                                                            "a:RenewalDate": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "@@i:nil": {
+                                                                        "type": "string"
+                                                                    }
+                                                                }
+                                                            },
+                                                            "a:Status": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "SOAP_HTTP": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "REST_HTTP": {
+                "type": "Http",
+                "inputs": {
+                    "method": "GET",
+                    "uri": "https://ins-domain-rest-api.azurewebsites.net/Policy",
+                    "queries": {
+                        "id": "123"
+                    }
+                },
+                "runAfter": {}
+            },
+            "Compose": {
+                "type": "Compose",
+                "inputs": {
+                    "results": [
+                        "@body('REST_HTTP')",
+                        {
+                            "policyId": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:PolicyId']}",
+                            "policyNumber": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:PolicyNo']}",
+                            "status": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:Status']}",
+                            "description": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:ProductDesc']}",
+                            "effectiveFrom": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:CoverStarts']}",
+                            "effectiveTo": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:PolicyEnd']}",
+                            "renewalDate": null,
+                            "premium": "@body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:Amount']",
+                            "product": {
+                                "name": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:ProductName']}",
+                                "description": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:ProductDesc']}",
+                                "productType": "Travel",
+                                "termLengthMonths": 12
+                            },
+                            "primaryPolicyHolderId": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:PrimaryPolicyHolderId']}",
+                            "policyHolders": [
+                                {
+                                    "id": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:PrimaryPolicyHolderId']}",
+                                    "firstName": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:PolicyHolderName']}",
+                                    "surname": "@{body('Parse_JSON')?['s:Envelope']?['s:Body']?['GetPolicyResponse']?['GetPolicyResult']?['a:PolicyHolderLastName']}"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "REST_HTTP": [
+                        "Succeeded"
+                    ],
+                    "Parse_JSON": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Response": {
+                "type": "Response",
+                "kind": "http",
+                "inputs": {
+                    "statusCode": 200,
+                    "body": "@outputs('Compose')"
+                },
+                "runAfter": {
+                    "Compose": [
+                        "Succeeded"
+                    ]
+                }
+            }
+        },
+        "triggers": {
+            "manual": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "userId": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {}
+    },
+    "kind": "Stateless"
+}

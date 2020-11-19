@@ -1,0 +1,9 @@
+GET https://ins-domain-apim.azure-api.net/mfins/Policy/985
+Ocp-Apim-Subscription-Key: {{logic-app-insurance-apim-key}}
+Ocp-Apim-Trace: true
+
+###
+
+GET https://ins-domain-apim.azure-api.net/mfins/users/2/policies
+Ocp-Apim-Subscription-Key: {{logic-app-insurance-apim-key}}
+Ocp-Apim-Trace: true

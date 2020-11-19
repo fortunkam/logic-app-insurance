@@ -10,7 +10,8 @@
                     "headers": {
                         "Content-Type": "text/xml",
                         "SOAPAction": "http://tempuri.org/IService1/GetPolicy",
-                        "Host": "ins-domain-soap-api.azurewebsites.net"
+                        "Host": "ins-domain-soap-api.azurewebsites.net",
+                        "Request-Id": "@{triggerOutputs()['headers']['Request-Id']}"
                     },
                     "body": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <tem:GetPolicy>\n         <!--Optional:-->\n         <tem:policyId></tem:policyId>\n      </tem:GetPolicy>\n   </soapenv:Body>\n</soapenv:Envelope>"
                 },
@@ -118,6 +119,9 @@
                 "inputs": {
                     "method": "GET",
                     "uri": "https://ins-domain-rest-api.azurewebsites.net/Policy",
+                    "headers": {
+                        "Request-Id": "@{triggerOutputs()['headers']['Request-Id']}"
+                    },
                     "queries": {
                         "id": "123"
                     }
